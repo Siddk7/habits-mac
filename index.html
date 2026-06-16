@@ -6,6 +6,7 @@
 <title>Habits</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#f5f9f5;color:#1a2e1a;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
@@ -97,7 +98,7 @@ html,body{height:100%;background:#f5f9f5;color:#1a2e1a;font-family:'DM Sans',san
 
 /* ── This month page ── */
 #page-month{flex:1;display:flex;gap:20px;overflow:hidden}
-#page-history{flex:1;display:flex;gap:20px;overflow:hidden}
+#page-history{flex:1;display:flex;gap:20px;overflow:hidden;min-height:0}
 .page{display:none}
 .page.active{display:flex}
 
@@ -136,7 +137,11 @@ html,body{height:100%;background:#f5f9f5;color:#1a2e1a;font-family:'DM Sans',san
 .sc-lbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7aab7a}
 
 /* ── History page ── */
-.history-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.history-main{flex:1;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;min-height:0}
+.hist-chart-wrap{flex-shrink:0;background:#fff;border-radius:14px;border:1px solid #deeede;padding:18px 20px 14px;margin-top:14px;margin-bottom:24px}
+.hist-chart-header{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+.hist-chart-title{font-family:'DM Serif Display',serif;font-size:15px;color:#1a2e1a}
+.hist-chart-sub{font-size:12px;color:#7aab7a;font-weight:500}
 
 .hist-nav-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px;flex-shrink:0}
 .hist-month-label{font-family:'DM Serif Display',serif;font-size:20px;color:#1a2e1a}
@@ -145,7 +150,7 @@ html,body{height:100%;background:#f5f9f5;color:#1a2e1a;font-family:'DM Sans',san
 .hnav-btn:hover{background:#e8f2e8}
 .hnav-btn:disabled{opacity:.35;cursor:default}
 
-.history-sheet-wrap{flex:1;overflow:auto;background:#fff;border-radius:14px;border:1px solid #deeede}
+.history-sheet-wrap{flex:0 0 auto;max-height:340px;overflow:auto;background:#fff;border-radius:14px;border:1px solid #deeede}
 .history-sheet-wrap::-webkit-scrollbar{height:6px;width:6px}
 .history-sheet-wrap::-webkit-scrollbar-track{background:#f0f7f0}
 .history-sheet-wrap::-webkit-scrollbar-thumb{background:#c8dfc8;border-radius:3px}
@@ -261,6 +266,15 @@ html,body{height:100%;background:#f5f9f5;color:#1a2e1a;font-family:'DM Sans',san
         </div>
         <div class="history-sheet-wrap">
           <table class="hist-table" id="hist-table"><tbody id="hist-body"></tbody></table>
+        </div>
+        <div class="hist-chart-wrap">
+          <div class="hist-chart-header">
+            <span class="hist-chart-title">Daily completion</span>
+            <span class="hist-chart-sub" id="hist-chart-sub"></span>
+          </div>
+          <div style="position:relative;height:140px;width:100%">
+            <canvas id="hist-chart" role="img" aria-label="Daily habit completion percentage chart for selected month">Daily completion chart.</canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -459,6 +473,91 @@ function renderTodayGrid(){
 
 /* ── Charts ── */
 var areaChartInstance = null;
+var histChartInstance = null;
+function renderHistChart(y, m) {
+  var today = new Date();
+  var isCurr = (y === today.getFullYear() && m === today.getMonth() + 1);
+  var days = daysInMonth(y, m);
+  var dayLimit = isCurr ? today.getDate() : days;
+  var pcts = getDailyPcts(y, m, dayLimit);
+
+  // Build full month labels + data (nulls for future)
+  var labels = [], data = [];
+  for (var i = 1; i <= days; i++) {
+    labels.push(i === 1 || i % 5 === 0 || i === dayLimit ? String(i) : '');
+    data.push(i <= dayLimit ? pcts[i - 1] : null);
+  }
+
+  var sub = MONTH_NAMES[m - 1] + ' ' + y;
+  var el = document.getElementById('hist-chart-sub');
+  if (el) el.textContent = sub;
+
+  var canvas = document.getElementById('hist-chart');
+  if (!canvas) return;
+  if (histChartInstance) { histChartInstance.destroy(); histChartInstance = null; }
+
+  histChartInstance = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: data,
+        borderColor: '#4a9e3f',
+        borderWidth: 2.5,
+        fill: true,
+        backgroundColor: 'rgba(74,158,63,0.12)',
+        tension: 0.4,
+        spanGaps: false,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#4a9e3f',
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: function(ctx) { return 'Day ' + (ctx[0].dataIndex + 1); },
+            label: function(ctx) { return ctx.parsed.y !== null ? ctx.parsed.y + '% done' : ''; }
+          },
+          backgroundColor: '#1a2e1a',
+          titleColor: '#7bc67e',
+          bodyColor: '#f5f9f5',
+          titleFont: { size: 11 },
+          bodyFont: { size: 12, weight: '600' },
+          padding: 10,
+          cornerRadius: 8,
+          displayColors: false
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { font: { size: 10 }, color: '#aacbaa', maxRotation: 0, autoSkip: false }
+        },
+        y: {
+          min: 0,
+          max: 100,
+          position: 'left',
+          grid: { color: 'rgba(200,223,200,0.3)', drawBorder: false },
+          border: { display: false, dash: [3, 3] },
+          ticks: {
+            font: { size: 10 },
+            color: '#aacbaa',
+            stepSize: 25,
+            callback: function(v) { return v + '%'; }
+          }
+        }
+      }
+    }
+  });
+}
 function renderAreaChart(){
   var today=new Date(),y=today.getFullYear(),m=today.getMonth()+1;
   var s=getMonthStats(y,m);
@@ -615,6 +714,8 @@ function renderHistoryGrid(){
     totTR.appendChild(ttd);
   }
   body.appendChild(totTR);
+  // Render chart for this month
+  setTimeout(function(){renderHistChart(y,m);},0);
 }
 
 function histChangeMonth(dir){
@@ -694,6 +795,5 @@ renderAll();
 // Auto-refresh every 60s
 setInterval(function(){var c=getBinConfig();if(c.binId&&c.key)pullFromCloud();},60000);
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 </body>
 </html>
