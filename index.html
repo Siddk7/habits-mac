@@ -111,6 +111,16 @@ html,body{height:100%;background:#f5f9f5;color:#1a2e1a;font-family:'DM Sans',san
 
 .area-chart-svg{width:100%;display:block}
 
+.month-layout{flex:1;display:flex;flex-direction:column;gap:14px;overflow-y:auto;min-height:0;padding-top:0}
+.month-layout::-webkit-scrollbar{width:4px}
+.month-layout::-webkit-scrollbar-thumb{background:#c8dfc8;border-radius:2px}
+.chart-panel-wide{flex-shrink:0}
+.chart-panel-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.chart-panel-header .panel-title{margin-bottom:0}
+.chart-legend{display:flex;align-items:center;gap:6px;font-size:11px;color:#7aab7a;font-weight:500}
+.legend-dot{width:10px;height:10px;border-radius:2px;background:#4a9e3f;display:inline-block}
+.month-bottom-row{display:flex;gap:14px;flex-shrink:0;padding-bottom:24px}
+
 .ana-row{display:flex;align-items:center;gap:8px;margin-bottom:9px}
 .ana-row:last-child{margin-bottom:0}
 .ana-name{width:76px;flex-shrink:0;font-size:11px;color:#4a7c4a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -216,18 +226,25 @@ html,body{height:100%;background:#f5f9f5;color:#1a2e1a;font-family:'DM Sans',san
 
     <!-- THIS MONTH page -->
     <div class="page active" id="page-month">
-      <div class="charts-col" id="charts-col">
-        <div class="panel-card">
-          <div class="panel-title">Daily completion</div>
-          <svg class="area-chart-svg" id="area-chart" viewBox="0 0 248 88" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="month-layout">
+        <div class="panel-card chart-panel-wide">
+          <div class="chart-panel-header">
+            <div class="panel-title">Daily completion — <span id="chart-month-label"></span></div>
+            <div class="chart-legend"><span class="legend-dot"></span>% of habits done</div>
+          </div>
+          <div style="position:relative;height:160px;width:100%">
+            <canvas id="area-chart" role="img" aria-label="Daily habit completion percentage for this month">Daily completion chart.</canvas>
+          </div>
         </div>
-        <div class="panel-card">
-          <div class="panel-title">Habit analysis</div>
-          <div id="analysis-rows"></div>
-        </div>
-        <div class="panel-card">
-          <div class="panel-title">Streaks</div>
-          <div class="streak-grid" id="streak-grid"></div>
+        <div class="month-bottom-row">
+          <div class="panel-card" style="flex:1">
+            <div class="panel-title">Habit analysis</div>
+            <div id="analysis-rows"></div>
+          </div>
+          <div class="panel-card" style="width:220px;flex-shrink:0">
+            <div class="panel-title">Streaks</div>
+            <div class="streak-grid" id="streak-grid"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -441,22 +458,52 @@ function renderTodayGrid(){
 }
 
 /* ── Charts ── */
+var areaChartInstance = null;
 function renderAreaChart(){
   var today=new Date(),y=today.getFullYear(),m=today.getMonth()+1;
   var s=getMonthStats(y,m);
+  var days=daysInMonth(y,m);
   var pcts=getDailyPcts(y,m,s.dayLimit);
-  var svg=document.getElementById('area-chart');
-  var W=248,H=88,pL=22,pR=6,pT=8,pB=16;
-  var cW=W-pL-pR,cH=H-pT-pB;
-  if(pcts.length<2){svg.innerHTML='<text x="124" y="44" text-anchor="middle" font-size="11" fill="#aacbaa">No data yet</text>';return;}
-  var pts=pcts.map(function(v,i){return[pL+(i/(pcts.length-1))*cW,pT+cH-(v/100)*cH];});
-  var pathD='M'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' L');
-  var fillD=pathD+' L'+pts[pts.length-1][0].toFixed(1)+','+(pT+cH)+' L'+pL+','+(pT+cH)+' Z';
-  var yL='';
-  [0,50,100].forEach(function(v){var ly=pT+cH-(v/100)*cH;yL+='<text x="'+(pL-3)+'" y="'+(ly+3)+'" text-anchor="end" font-size="8" fill="#aacbaa">'+v+'</text><line x1="'+pL+'" y1="'+ly+'" x2="'+(W-pR)+'" y2="'+ly+'" stroke="#f0f7f0" stroke-width="1"/>';});
-  var xL='';
-  [1,8,15,22,29].forEach(function(d){if(d<=s.dayLimit){var lx=pL+((d-1)/(pcts.length-1))*cW;xL+='<text x="'+lx.toFixed(1)+'" y="'+(H-2)+'" text-anchor="middle" font-size="8" fill="#aacbaa">'+d+'</text>';}});
-  svg.innerHTML=yL+'<path d="'+fillD+'" fill="rgba(74,158,63,0.1)"/><path d="'+pathD+'" fill="none" stroke="#4a9e3f" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>'+xL+'<circle cx="'+pts[pts.length-1][0].toFixed(1)+'" cy="'+pts[pts.length-1][1].toFixed(1)+'" r="3" fill="#4a9e3f"/>';
+  // Pad to full month with nulls for future days
+  var fullData=[];
+  for(var i=0;i<days;i++){fullData.push(i<s.dayLimit?pcts[i]:null);}
+  var labels=[];
+  for(var d=1;d<=days;d++){labels.push(d===1||d%5===0||d===today.getDate()?String(d):'');}
+  document.getElementById('chart-month-label').textContent=MONTH_NAMES[m-1]+' '+y;
+  var canvas=document.getElementById('area-chart');
+  if(areaChartInstance){areaChartInstance.destroy();areaChartInstance=null;}
+  areaChartInstance=new Chart(canvas,{
+    type:'line',
+    data:{
+      labels:labels,
+      datasets:[{
+        data:fullData,
+        borderColor:'#4a9e3f',
+        borderWidth:2.5,
+        fill:true,
+        backgroundColor:'rgba(74,158,63,0.1)',
+        tension:0.4,
+        spanGaps:false,
+        pointRadius:fullData.map(function(v,i){return(i===s.dayLimit-1&&v!==null)?5:0;}),
+        pointBackgroundColor:'#4a9e3f',
+        pointBorderColor:'#fff',
+        pointBorderWidth:2
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{
+        callbacks:{label:function(ctx){return ctx.parsed.y!==null?ctx.parsed.y+'% done':'';}},
+        backgroundColor:'#1a2e1a',color:'#f5f9f5',
+        titleFont:{size:11},bodyFont:{size:11},padding:8,cornerRadius:8,displayColors:false
+      }},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:10},color:'#aacbaa',maxRotation:0,autoSkip:false}},
+        y:{min:0,max:100,grid:{color:'rgba(200,223,200,0.25)',drawBorder:false},ticks:{font:{size:10},color:'#aacbaa',stepSize:25,callback:function(v){return v+'%';}}}
+      }
+    }
+  });
 }
 
 function renderAnalysis(){
@@ -647,5 +694,6 @@ renderAll();
 // Auto-refresh every 60s
 setInterval(function(){var c=getBinConfig();if(c.binId&&c.key)pullFromCloud();},60000);
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 </body>
 </html>
