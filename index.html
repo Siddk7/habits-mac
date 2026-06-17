@@ -133,6 +133,12 @@ html,body{height:100%;background:#f5f9f5;color:#1a2e1a;font-family:'DM Sans',san
 .hm-id{font-size:11px;color:#c8dfc8;font-weight:400}
 .hm-del{width:28px;height:28px;border-radius:50%;border:1.5px solid #deeede;background:#fff;color:#aacbaa;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0}
 .hm-del:hover{border-color:#e85a3a;color:#e85a3a;background:#fff5f5}
+.hm-drag{width:24px;height:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:grab;flex-shrink:0;opacity:.35;transition:opacity .12s}
+.hm-drag:active{cursor:grabbing}
+.hm-drag:hover{opacity:.7}
+.hm-drag-bar{width:14px;height:2px;background:#7aab7a;border-radius:1px}
+.habit-manage-row.drag-over{background:#f0f7f0;border-radius:10px}
+.habit-manage-row.dragging{opacity:.4}
 
 /* Shared */
 .panel-card{background:#fff;border-radius:14px;border:1px solid #deeede;padding:16px}
@@ -595,22 +601,73 @@ function renderEmojiGrid(){
   });
 }
 
+var dragSrcIndex = null;
+
 function renderHabitManageList(){
   var el=document.getElementById('habit-manage-list');
   if(!el) return;
   var title=document.getElementById('manage-list-title');
-  if(title) title.textContent='Your habits ('+HABITS.length+')';
+  if(title) title.textContent='Your habits ('+HABITS.length+') — drag to reorder';
   if(!HABITS.length){
     el.innerHTML='<div style="padding:20px;text-align:center;color:#aacbaa;font-size:13px">No habits yet — add one!</div>';
     return;
   }
   el.innerHTML='';
-  HABITS.forEach(function(h){
-    var row=document.createElement('div'); row.className='habit-manage-row';
-    row.innerHTML='<div class="hm-emoji">'+h.emoji+'</div><div class="hm-name">'+h.name+'</div>';
+  HABITS.forEach(function(h, i){
+    var row=document.createElement('div');
+    row.className='habit-manage-row';
+    row.setAttribute('draggable','true');
+    row.dataset.index=i;
+
+    // Drag handle
+    var handle=document.createElement('div'); handle.className='hm-drag'; handle.title='Drag to reorder';
+    handle.innerHTML='<div class="hm-drag-bar"></div><div class="hm-drag-bar"></div><div class="hm-drag-bar"></div>';
+
+    var emojiEl=document.createElement('div'); emojiEl.className='hm-emoji'; emojiEl.textContent=h.emoji;
+    var nameEl=document.createElement('div'); nameEl.className='hm-name'; nameEl.textContent=h.name;
     var delBtn=document.createElement('button'); delBtn.className='hm-del'; delBtn.textContent='×'; delBtn.title='Delete habit';
+
     (function(hid){ delBtn.addEventListener('click',function(){ deleteHabit(hid); }); })(h.id);
+
+    row.appendChild(handle);
+    row.appendChild(emojiEl);
+    row.appendChild(nameEl);
     row.appendChild(delBtn);
+
+    // Drag events
+    row.addEventListener('dragstart', function(e){
+      dragSrcIndex = parseInt(this.dataset.index);
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragend', function(){
+      this.classList.remove('dragging');
+      el.querySelectorAll('.habit-manage-row').forEach(function(r){ r.classList.remove('drag-over'); });
+    });
+    row.addEventListener('dragover', function(e){
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      el.querySelectorAll('.habit-manage-row').forEach(function(r){ r.classList.remove('drag-over'); });
+      this.classList.add('drag-over');
+    });
+    row.addEventListener('dragleave', function(){
+      this.classList.remove('drag-over');
+    });
+    row.addEventListener('drop', function(e){
+      e.preventDefault();
+      var targetIndex = parseInt(this.dataset.index);
+      if(dragSrcIndex === null || dragSrcIndex === targetIndex) return;
+      // Reorder HABITS array
+      var moved = HABITS.splice(dragSrcIndex, 1)[0];
+      HABITS.splice(targetIndex, 0, moved);
+      dragSrcIndex = null;
+      saveHabits();
+      renderHabitManageList();
+      renderAll();
+      scheduleSyncPush();
+      toast('Order saved');
+    });
+
     el.appendChild(row);
   });
 }
