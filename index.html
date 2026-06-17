@@ -82,27 +82,41 @@ html,body{height:100%;background:#f5f9f5;color:#1a2e1a;font-family:'DM Sans',san
 /* History */
 #page-history{flex-direction:column}
 .history-main{flex:1;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;min-height:0}
-.hist-nav-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px;flex-shrink:0}
+.history-main::-webkit-scrollbar{width:4px}
+.history-main::-webkit-scrollbar-thumb{background:#c8dfc8;border-radius:2px}
+.hist-nav-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0 12px;flex-shrink:0}
 .hist-month-label{font-family:'DM Serif Display',serif;font-size:20px;color:#1a2e1a}
 .hist-nav-btns{display:flex;gap:8px}
 .hnav-btn{width:32px;height:32px;border-radius:50%;border:1.5px solid #c8dfc8;background:#fff;font-size:15px;color:#4a7c4a;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s}
 .hnav-btn:hover{background:#e8f2e8}
 .hnav-btn:disabled{opacity:.35;cursor:default}
-.history-sheet-wrap{flex:0 0 auto;max-height:340px;overflow:auto;background:#fff;border-radius:14px;border:1px solid #deeede}
-.history-sheet-wrap::-webkit-scrollbar{height:6px;width:6px}
-.history-sheet-wrap::-webkit-scrollbar-track{background:#f0f7f0}
-.history-sheet-wrap::-webkit-scrollbar-thumb{background:#c8dfc8;border-radius:3px}
-.hist-table{border-collapse:collapse;min-width:100%}
-.hist-table th,.hist-table td{border:1px solid #e8f2e8;white-space:nowrap}
-.ht-habit-head{position:sticky;left:0;top:0;z-index:6;background:#f0f7f0;padding:8px 14px;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7aab7a;text-align:left;min-width:160px}
-.ht-day-head{position:sticky;top:0;z-index:4;background:#f0f7f0;padding:0;text-align:center;min-width:38px;width:38px}
-.ht-habit-cell{position:sticky;left:0;z-index:2;background:#fff;padding:7px 14px;font-size:12px;font-weight:500;color:#1a2e1a;min-width:160px}
-.ht-check-cell{text-align:center;padding:5px 4px;width:38px;min-width:38px}
-.ht-sum-head{position:sticky;left:0;z-index:2;background:#f7fbf7;padding:5px 14px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7aab7a}
-.ht-sum-cell{background:#f7fbf7;text-align:center;font-size:10px;font-weight:700;padding:4px 2px}
-.ht-total-head{position:sticky;left:0;z-index:2;background:#e8f2e8;padding:5px 14px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#1a2e1a}
-.ht-total-cell{background:#e8f2e8;text-align:center;font-size:11px;font-weight:700;padding:4px 2px}
-.week-div-row td{background:#e8f2e8;padding:3px 14px;font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#4a7c4a}
+/* Day list */
+.day-list{display:flex;flex-direction:column;gap:6px;padding-bottom:24px}
+.day-row{background:#fff;border-radius:12px;border:1px solid #deeede;overflow:hidden;transition:border-color .15s}
+.day-row:hover{border-color:#c8dfc8}
+.day-row-header{display:flex;align-items:center;gap:14px;padding:11px 16px;cursor:pointer;user-select:none}
+.dr-date{width:44px;flex-shrink:0}
+.dr-day-name{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7aab7a}
+.dr-day-num{font-size:18px;font-weight:600;color:#1a2e1a;font-family:'DM Serif Display',serif;line-height:1.1}
+.dr-day-num.is-today{color:#e8673a}
+.dr-bar-wrap{flex:1;height:6px;background:#e8f2e8;border-radius:3px;overflow:hidden}
+.dr-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,#4a9e3f,#7bc67e);transition:width .4s cubic-bezier(.22,1,.36,1)}
+.dr-pct{font-size:12px;font-weight:600;color:#4a7c4a;width:36px;text-align:right;flex-shrink:0}
+.dr-pct.zero{color:#c8dfc8}
+.dr-chevron{font-size:12px;color:#c8dfc8;transition:transform .2s;flex-shrink:0}
+.day-row.open .dr-chevron{transform:rotate(180deg)}
+/* Expanded habit list */
+.day-habits{display:none;padding:0 16px 12px;border-top:1px solid #f0f7f0}
+.day-row.open .day-habits{display:block}
+.day-habits-grid{display:flex;flex-direction:column;gap:2px;margin-top:10px}
+.dh-row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;cursor:pointer;transition:background .12s}
+.dh-row:hover{background:#f7fbf7}
+.dh-cb{width:20px;height:20px;border-radius:5px;border:1.5px solid #c8dfc8;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s}
+.dh-cb.on{background:#4a9e3f;border-color:#4a9e3f}
+.dh-cb.on::after{content:'';width:4px;height:8px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translateY(-1px);display:block}
+.dh-emoji{font-size:15px;flex-shrink:0}
+.dh-name{font-size:13px;font-weight:500;color:#1a2e1a;flex:1}
+.dh-name.done{color:#7aab7a;text-decoration:line-through;text-decoration-color:#b8ddb8}
 
 /* Manage habits */
 #page-manage{flex-direction:row;gap:20px}
@@ -243,13 +257,7 @@ html,body{height:100%;background:#f5f9f5;color:#1a2e1a;font-family:'DM Sans',san
             <button class="hnav-btn" onclick="histChangeMonth(1)" id="hnav-next">›</button>
           </div>
         </div>
-        <div class="history-sheet-wrap">
-          <table class="hist-table" id="hist-table"><tbody id="hist-body"></tbody></table>
-        </div>
-        <div style="flex-shrink:0;background:#1a2e1a;border-radius:14px;padding:22px 26px;margin-top:14px;margin-bottom:24px;display:flex;flex-direction:column;justify-content:center">
-          <div style="font-family:'DM Serif Display',serif;font-size:20px;font-style:italic;color:#f5f9f5;line-height:1.5;margin-bottom:10px">"Be the man you want to be in 10 years today."</div>
-          <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#7bc67e">Daily reminder</div>
-        </div>
+        <div class="day-list" id="day-list"></div>
       </div>
     </div>
 
@@ -505,77 +513,104 @@ function renderAnalysis(){
   });
 }
 
-/* ── History grid ── */
+/* ── History — day list ── */
+var openDayIndex = null;
+
 function renderHistoryGrid(){
   var y=histYear, m=histMonth, days=daysInMonth(y,m);
   var today=new Date(), isCurr=(y===today.getFullYear()&&m===today.getMonth()+1);
   var todayDate=isCurr?today.getDate():0;
-  var firstDow=new Date(y,m-1,1).getDay();
   var g=getMonthGrid(y,m);
+  var FULL_DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
   document.getElementById('hist-month-label').textContent=MONTH_NAMES[m-1]+' '+y;
   document.getElementById('hnav-next').disabled=isCurr;
-  var body=document.getElementById('hist-body'); body.innerHTML='';
-  function weekOf(d){ return Math.floor((firstDow+d-1)/7); }
 
-  var headTR=document.createElement('tr');
-  var th0=document.createElement('th'); th0.className='ht-habit-head'; th0.textContent='Habit'; headTR.appendChild(th0);
-  for(var d=1;d<=days;d++){
-    var th=document.createElement('th'); th.className='ht-day-head';
-    var dow=new Date(y,m-1,d).getDay(); var isToday=isCurr&&d===todayDate;
-    th.innerHTML='<div class="tdh-inner"><div class="tdh-name">'+DAY_NAMES[dow]+'</div><div class="tdh-num'+(isToday?' today-col':'')+'">'+d+'</div></div>';
-    if(isToday) th.style.background='#fff8f6';
-    headTR.appendChild(th);
-  }
-  body.appendChild(headTR);
+  var list=document.getElementById('day-list'); list.innerHTML='';
 
-  var weekStarts=[], curWeek=-1;
-  for(var d2=1;d2<=days;d2++){ var w=weekOf(d2); if(w!==curWeek){ curWeek=w; weekStarts.push({week:w,wi:weekStarts.length}); } }
+  // Build days newest first, only up to today for current month
+  var limit=isCurr?todayDate:days;
+  for(var d=limit;d>=1;d--){
+    var di=d-1;
+    var dow=new Date(y,m-1,d).getDay();
+    var done=HABITS.filter(function(h){ return g[h.id][di]; }).length;
+    var pct=HABITS.length>0?Math.round((done/HABITS.length)*100):0;
+    var isToday=isCurr&&d===todayDate;
 
-  weekStarts.forEach(function(ws){
-    var wtr=document.createElement('tr'); wtr.className='week-div-row';
-    var wtd=document.createElement('td'); wtd.colSpan=days+1; wtd.textContent='Week '+(ws.wi+1); wtr.appendChild(wtd); body.appendChild(wtr);
+    var row=document.createElement('div');
+    row.className='day-row';
+    row.dataset.day=d;
+
+    var header=document.createElement('div');
+    header.className='day-row-header';
+    header.innerHTML=
+      '<div class="dr-date">'+
+        '<div class="dr-day-name">'+DAY_NAMES[dow]+'</div>'+
+        '<div class="dr-day-num'+(isToday?' is-today':'')+'">'+d+'</div>'+
+      '</div>'+
+      '<div class="dr-bar-wrap"><div class="dr-bar" style="width:'+pct+'%"></div></div>'+
+      '<div class="dr-pct'+(pct===0?' zero':'')+'">'+pct+'%</div>'+
+      '<div class="dr-chevron">▾</div>';
+
+    // Expanded habit section
+    var expand=document.createElement('div');
+    expand.className='day-habits';
+    var grid=document.createElement('div');
+    grid.className='day-habits-grid';
+
     HABITS.forEach(function(h){
-      var tr=document.createElement('tr');
-      var tdN=document.createElement('td'); tdN.className='ht-habit-cell';
-      tdN.innerHTML='<span style="margin-right:6px">'+h.emoji+'</span>'+h.name; tr.appendChild(tdN);
-      for(var d3=1;d3<=days;d3++){
-        var td=document.createElement('td'); td.className='ht-check-cell';
-        if(weekOf(d3)===ws.week){
-          var isToday2=isCurr&&d3===todayDate, isFuture=isCurr&&d3>todayDate;
-          var cb=document.createElement('div');
-          cb.className='hcb'+(g[h.id][d3-1]?' checked':'')+(isFuture?' future':'')+(isToday2?' today-hcb':'');
-          if(!isFuture){ (function(hid,di){ cb.addEventListener('click',function(){ toggle(y,m,hid,di); }); })(h.id,d3-1); }
-          td.appendChild(cb); if(isToday2) td.style.background='#fff8f6';
-        } else { td.style.background='#fafcfa'; }
-        tr.appendChild(td);
-      }
-      body.appendChild(tr);
+      var checked=g[h.id][di];
+      var hrow=document.createElement('div'); hrow.className='dh-row';
+      hrow.innerHTML=
+        '<div class="dh-cb'+(checked?' on':'')+'"></div>'+
+        '<div class="dh-emoji">'+h.emoji+'</div>'+
+        '<div class="dh-name'+(checked?' done':'')+'">'+h.name+'</div>';
+      // Toggle on click
+      (function(hid, dayIdx, rowEl){
+        rowEl.addEventListener('click', function(){
+          g[hid][dayIdx]=!g[hid][dayIdx];
+          saveHS();
+          // Update this row visually
+          var cb=rowEl.querySelector('.dh-cb');
+          var nm=rowEl.querySelector('.dh-name');
+          var isOn=g[hid][dayIdx];
+          cb.className='dh-cb'+(isOn?' on':'');
+          nm.className='dh-name'+(isOn?' done':'');
+          // Update bar + pct in header
+          var newDone=HABITS.filter(function(hh){ return g[hh.id][dayIdx]; }).length;
+          var newPct=HABITS.length>0?Math.round((newDone/HABITS.length)*100):0;
+          var parentRow=rowEl.closest('.day-row');
+          parentRow.querySelector('.dr-bar').style.width=newPct+'%';
+          var pctEl=parentRow.querySelector('.dr-pct');
+          pctEl.textContent=newPct+'%';
+          pctEl.className='dr-pct'+(newPct===0?' zero':'');
+          // Update today grid if current month
+          if(isCurr) renderTodayGrid();
+          renderAreaChart(); renderAnalysis();
+        });
+      })(h.id, di, hrow);
+      grid.appendChild(hrow);
     });
-    var sumTR=document.createElement('tr');
-    var sumTh=document.createElement('td'); sumTh.className='ht-sum-head'; sumTh.textContent='%'; sumTR.appendChild(sumTh);
-    for(var d4=1;d4<=days;d4++){
-      var std=document.createElement('td'); std.className='ht-sum-cell';
-      if(weekOf(d4)===ws.week){
-        var isFut=isCurr&&d4>todayDate;
-        if(!isFut){ var cnt=HABITS.filter(function(h2){ return g[h2.id][d4-1]; }).length, pct=HABITS.length>0?Math.round((cnt/HABITS.length)*100):0; std.textContent=pct+'%'; std.style.color=pct===100?'#4a9e3f':pct>=60?'#7bc67e':pct>0?'#aacbaa':'#deeede'; }
-        if(isCurr&&d4===todayDate){ std.style.background='#fff3ef'; std.style.color='#e8673a'; }
-      } else { std.style.background='#fafcfa'; }
-      sumTR.appendChild(std);
-    }
-    body.appendChild(sumTR);
-  });
+    expand.appendChild(grid);
 
-  var totTR=document.createElement('tr');
-  var totTh=document.createElement('td'); totTh.className='ht-total-head'; totTh.textContent='TOTAL'; totTR.appendChild(totTh);
-  for(var d5=1;d5<=days;d5++){
-    var ttd=document.createElement('td'); ttd.className='ht-total-cell';
-    var isFut2=isCurr&&d5>todayDate;
-    if(!isFut2){ var cnt2=HABITS.filter(function(h3){ return g[h3.id][d5-1]; }).length; ttd.textContent=cnt2+'/'+HABITS.length; ttd.style.color=cnt2===HABITS.length?'#4a9e3f':cnt2===0?'#aacbaa':'#1a2e1a'; }
-    else { ttd.textContent=''; ttd.style.opacity='.3'; }
-    if(isCurr&&d5===todayDate) ttd.style.background='#fff3ef';
-    totTR.appendChild(ttd);
+    // Toggle open/close
+    (function(rowEl, expandEl){
+      header.addEventListener('click', function(){
+        var isOpen=rowEl.classList.contains('open');
+        // Close all others
+        list.querySelectorAll('.day-row.open').forEach(function(r){ r.classList.remove('open'); });
+        if(!isOpen) rowEl.classList.add('open');
+      });
+    })(row, expand);
+
+    row.appendChild(header);
+    row.appendChild(expand);
+    list.appendChild(row);
   }
-  body.appendChild(totTR);
+
+  // Auto-open today
+  var firstRow=list.querySelector('.day-row');
+  if(firstRow) firstRow.classList.add('open');
 }
 
 function histChangeMonth(dir){
